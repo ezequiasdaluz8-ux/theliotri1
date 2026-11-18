@@ -44,13 +44,17 @@ input[type=text],input[type=email],input[type=password],select{width:100%;paddin
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 .wrap{overflow-x:auto}
+.count{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;margin:12px 0}
+.count div{background:var(--bg);border:1px solid var(--line);padding:10px 2px}
+.count b{display:block;font:400 30px/1 Impact,sans-serif;color:var(--accent)}
+.count small{color:var(--muted);font-size:11px}
 .btn.sm{padding:6px 12px;font-size:13px}
 .back{display:inline-block;margin-bottom:14px;font-weight:700}
 .warn{font-size:13px;color:var(--muted);margin-top:10px}
 </style>
 </head>
 <body>
-<header><a class="logo" href="#"><img src="logo.jpg" alt=""><b id="brand"></b></a><nav><a href="#">Eventos</a><a href="#admin">Organizador</a></nav></header>
+<header><a class="logo" href="#"><img src="logo.jpg" alt=""><b id="brand"></b></a><nav><a href="#">Eventos</a></nav></header>
 <main id="app"></main>
 
 <script>
@@ -60,12 +64,13 @@ const CONFIG = {
   whatsapp: "5591999999999",          // DDI+DDD+número, só dígitos
   pixChave: "sua-chave-pix-aqui",
   pixNome: "Nome do recebedor",
-  senhaPainelDemo: "trocar123"        // SÓ PARA TESTE. Na versão final o login vem do Supabase.
+  urlPlanilha: "https://script.google.com/macros/s/AKfycbx-V3vtj4Vf9Aie3qDqFi1QhK9SEf9fbusCKQRo0JMHa7RdKaCnCj5eZPJpoHS3Ueif/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
+  modoTeste: true                     // true = libera o formulário mesmo fora do prazo (use só para testar; volte para false ao publicar)
 };
 /* flyer: coloque a imagem na mesma pasta do index.html e informe só o nome do arquivo. Sem imagem, aparece um bloco colorido. */
 const EVENTOS = [
   {id:"niver-rafa", nome:"Niver do Rafa", data:"2027-01-24", local:"Guarumã", cor:"#2a2410"},
-  {id:"niver-thelio-tri", nome:"Niver Thelio Tri", data:"2027-04-18", hora:"06:00", concentracao:"05:30", local:"Praça Matriz, Acará", org:"Assessoria Thelio Tri", flyer:"flyer-niver-thelio-tri.jpg", cor:"#2a2410",
+  {id:"niver-thelio-tri", nome:"Niver Thelio Tri", data:"2027-04-18", hora:"06:00", concentracao:"05:30", local:"Praça Matriz, Acará", org:"Assessoria Thelio Tri", abre:"2026-12-01T08:00:00-03:00", fecha:"2027-04-16T23:59:00-03:00", flyer:"flyer-niver-thelio-tri.jpg", cor:"#2a2410",
    premiacao:"5 primeiros da classificação geral e Top 10 da categoria feminina, com dinheiro e brindes.",
    premios:{geral:["R$ 300","R$ 200","R$ 100","R$ 50","R$ 50"], top10:["R$ 100","R$ 100","R$ 100","R$ 100","R$ 100","Brinde","Brinde","Brinde","Brinde","Brinde"]},
    sobre:"Corrida de 5 km em comemoração ao aniversário do Thelio Tri. O kit inclui camisa, medalha e carbo gel.",
@@ -77,12 +82,6 @@ const EVENTOS = [
   {id:"reis-rainhas", nome:"Reis e Rainhas", data:"2027-11-07", local:"Acará", cor:"#2a2410"},
   {id:"corrida-bem", nome:"Corrida do Bem", data:"2027-12-12", local:"Acará", cor:"#2a2410"}
 ];
-/* ============ 2) DADOS (demo: ficam só neste navegador) ============ */
-const store = {
-  load(){try{return JSON.parse(localStorage.getItem("inscritos")||"[]")}catch(e){return[]}},
-  save(l){try{localStorage.setItem("inscritos",JSON.stringify(l))}catch(e){}},
-  add(x){const l=this.load();l.push(x);try{localStorage.setItem("inscritos",JSON.stringify(l))}catch(e){}}
-};
 const $=s=>document.querySelector(s), app=$("#app");
 const brl=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const dt=d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -116,22 +115,63 @@ function evento(id){
     <div class="row"><div><label for="cpf">CPF</label><input type="text" id="cpf" inputmode="numeric" required></div><div><label for="cel">Celular com DDD</label><input type="text" id="cel" inputmode="tel" placeholder="91999998888" required></div></div>
     <div class="row"><div><label for="gen">Gênero</label><select id="gen"><option>Masculino</option><option>Feminino</option></select></div>
     <div><label for="cat">Categoria</label><select id="cat">${e.categorias.map(c=>`<option>${esc(c)}</option>`).join("")}</select></div></div>
+    <label for="cam">Tamanho da camisa</label><select id="cam">${["PP","P","M","G","GG"].map(t=>`<option>${t}</option>`).join("")}</select>
     <label>Pacote</label>${e.pacotes.map((p,i)=>`<label class="pk"><span><input type="radio" name="pk" value="${i}" ${i?"":"checked"}>${esc(p.n)}<br><small>${esc(p.d)}</small></span><b>${brl(p.p)}</b></label>`).join("")}
     <div class="total"><span>Total</span><span id="tot"></span></div>
     <p class="warn" id="err" role="alert"></p>
     <button class="btn" type="submit">Finalizar inscrição</button></form>`;
   const upd=()=>{const i=+document.querySelector("input[name=pk]:checked").value;$("#tot").textContent=brl(e.pacotes[i].p)};
   app.querySelectorAll("input[name=pk]").forEach(r=>r.onchange=upd);upd();
-  $("#f").onsubmit=ev=>{ev.preventDefault();
+  $("#f").onsubmit=async ev=>{ev.preventDefault();
+    if(e.abre&&!CONFIG.modoTeste){const n=new Date();if(n<new Date(e.abre)||n>=new Date(e.fecha))return}
     const v=id=>$("#"+id).value.trim(), cpf=v("cpf").replace(/\D/g,""), cel=v("cel").replace(/\D/g,"");
     if(!v("nome")||!v("sob")||!/.+@.+\..+/.test(v("email"))||cpf.length!==11||cel.length<10){$("#err").textContent="Preencha todos os campos. CPF com 11 dígitos e celular com DDD.";return}
+    if(!/^https:\/\/script\.google\.com\//.test(CONFIG.urlPlanilha)){$("#err").textContent="Inscrições ainda não configuradas. Avise o organizador.";return}
     const p=e.pacotes[+document.querySelector("input[name=pk]:checked").value];
-    const r={evento:e.nome,nome:v("nome")+" "+v("sob"),email:v("email"),cpf,cel,genero:v("gen"),categoria:v("cat"),pacote:p.n,valor:p.p,em:new Date().toLocaleString("pt-BR")};
-    store.add(r);pagar(e,r);scrollTo(0,0)};
+    const r={evento:e.nome,nome:v("nome")+" "+v("sob"),email:v("email"),cpf,cel,genero:v("gen"),categoria:v("cat"),camisa:v("cam"),pacote:p.n,valor:p.p,em:new Date().toLocaleString("pt-BR")};
+    const btn=ev.target.querySelector("button[type=submit]"),volta=m=>{$("#err").textContent=m;btn.disabled=false;btn.textContent="Finalizar inscrição"};
+    btn.disabled=true;btn.textContent="Enviando...";$("#err").textContent="";
+    try{
+      const res=await fetch(CONFIG.urlPlanilha,{method:"POST",body:JSON.stringify(r)});
+      const j=await res.json();
+      if(!j.ok){volta(j.erro||"Não foi possível registrar a inscrição.");return}
+    }catch(x){volta("Não foi possível enviar a inscrição. Verifique a internet e tente novamente.");return}
+    pagar(e,r);scrollTo(0,0)};
+  janela(e);
+}
+
+function falta(n,t){
+  let m=(t.getFullYear()-n.getFullYear())*12+t.getMonth()-n.getMonth();
+  const mais=k=>{const r=new Date(n);r.setDate(1);r.setMonth(r.getMonth()+k);
+    r.setDate(Math.min(n.getDate(),new Date(r.getFullYear(),r.getMonth()+1,0).getDate()));return r};
+  let ref=mais(m); if(ref>t){m--;ref=mais(m)}
+  let ms=Math.floor((t-ref)/1000);
+  const d=Math.floor(ms/86400);ms%=86400;const h=Math.floor(ms/3600);ms%=3600;
+  return [m,d,h,Math.floor(ms/60),ms%60];
+}
+function janela(e){
+  clearInterval(window._t);
+  if(!e.abre||!e.fecha||CONFIG.modoTeste)return;
+  const ab=new Date(e.abre),fe=new Date(e.fecha),f=$("#f"),box=document.createElement("div");
+  box.className="box";f.before(box);
+  const fmt=d=>d.toLocaleString("pt-BR",{dateStyle:"long",timeStyle:"short"});
+  let est=null;
+  const tick=()=>{
+    const n=new Date(),st=n<ab?"antes":n<fe?"aberta":"fim";
+    if(est&&st!==est){evento(e.id);return}
+    if(!est&&st!=="aberta")f.remove();
+    est=st;
+    if(st==="fim"){box.innerHTML="<h2>Inscrições encerradas</h2><p>O prazo de inscrição desta corrida terminou.</p>";clearInterval(window._t);return}
+    const v=falta(n,st==="antes"?ab:fe),nm=["meses","dias","horas","minutos","segundos"];
+    box.innerHTML=`<h2>${st==="antes"?"As inscrições abrem em":"As inscrições encerram em"}</h2>
+    <div class="count" role="timer">${v.map((x,i)=>`<div><b>${String(x).padStart(2,"0")}</b><small>${nm[i]}</small></div>`).join("")}</div>
+    <p class="warn">${st==="antes"?"Abertura: "+fmt(ab):"Encerramento: "+fmt(fe)}</p>`;
+  };
+  tick();window._t=setInterval(tick,1000);
 }
 
 function pagar(e,r){
-  const msg=encodeURIComponent(`Olá! Segue o comprovante da inscrição de ${r.nome} na ${e.nome} (${r.categoria}, ${r.pacote} - ${brl(r.valor)}).`);
+  const msg=encodeURIComponent(`Olá! Segue o comprovante da inscrição de ${r.nome} na ${e.nome} (${r.categoria}, camisa ${r.camisa}, ${r.pacote} - ${brl(r.valor)}).`);
   app.innerHTML=`<h1>Inscrição recebida</h1><p class="lead">${esc(r.nome)}, falta só o pagamento para confirmar sua vaga em ${esc(e.nome)}.</p>
   <div class="box"><h2>1. Pague com PIX</h2><div class="total"><span>Valor</span><span>${brl(r.valor)}</span></div>
   <div>Chave PIX</div><div class="pix" id="pix">${esc(CONFIG.pixChave)}</div><div>Recebedor: <b>${esc(CONFIG.pixNome)}</b></div><br>
@@ -142,27 +182,8 @@ function pagar(e,r){
   $("#cp").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(CONFIG.pixChave).then(()=>$("#cp").textContent="Chave copiada")};
 }
 
-function admin(){
-  app.innerHTML=`<h1>Painel do organizador</h1><form class="box" id="lg"><label for="pw">Senha</label><input type="password" id="pw"><p class="warn" id="e2" role="alert"></p><button class="btn" type="submit">Entrar</button></form>`;
-  $("#lg").onsubmit=ev=>{ev.preventDefault();
-    if($("#pw").value!==CONFIG.senhaPainelDemo){$("#e2").textContent="Senha incorreta.";return}
-    painel()};
-}
-
-function painel(){
-  const l=store.load(), pagos=l.filter(x=>x.pago).length;
-  app.innerHTML=`<h1>Inscritos</h1><p class="lead">${l.length} inscrição(ões), ${pagos} paga(s). Modo de demonstração: os dados ficam só neste navegador.</p>
-  <div class="wrap"><table><tr><th>Evento</th><th>Nome</th><th>Categoria</th><th>Pacote</th><th>WhatsApp</th><th>Pagamento</th><th></th></tr>
-  ${l.length?l.map((x,i)=>`<tr><td>${esc(x.evento)}</td><td>${esc(x.nome)}</td><td>${esc(x.categoria)}</td><td>${esc(x.pacote)} (${brl(x.valor)})</td><td><a target="_blank" rel="noopener" href="https://wa.me/55${esc(x.cel)}">${esc(x.cel)}</a></td>
-  <td><button class="btn sm ${x.pago?"":"alt"}" data-pg="${i}">${x.pago?"Pago ✓":"Pendente"}</button></td>
-  <td><button class="btn sm alt" data-del="${i}">Apagar</button></td></tr>`).join(""):`<tr><td colspan="7">Nenhuma inscrição ainda. Faça uma de teste na página de um evento.</td></tr>`}</table></div>`;
-  app.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{const l=store.load(),i=+b.dataset.pg;l[i].pago=!l[i].pago;store.save(l);painel()});
-  app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const l=store.load(),i=+b.dataset.del;
-    if(confirm("Apagar a inscrição de "+l[i].nome+"? Essa ação não pode ser desfeita.")){l.splice(i,1);store.save(l);painel()}});
-}
-
-function route(){const h=location.hash.slice(1);
-  if(h==="admin")admin();else if(h.startsWith("evento/"))evento(h.slice(7));else home();}
+function route(){clearInterval(window._t);const h=location.hash.slice(1);
+  if(h.startsWith("evento/"))evento(h.slice(7));else home();}
 addEventListener("hashchange",route);route();
 </script>
 </body>
