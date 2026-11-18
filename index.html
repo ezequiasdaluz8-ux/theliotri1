@@ -44,10 +44,11 @@ input[type=text],input[type=email],input[type=password],select{width:100%;paddin
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 .wrap{overflow-x:auto}
-.count{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;margin:12px 0}
+.count{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;margin:12px 0}
 .count div{background:var(--bg);border:1px solid var(--line);padding:10px 2px}
 .count b{display:block;font:400 30px/1 Impact,sans-serif;color:var(--accent)}
 .count small{color:var(--muted);font-size:11px}
+.cd{padding:10px 12px;background:#000;border-bottom:1px solid var(--line);text-align:center;min-height:86px}.cd>small{display:block;color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.cd .count{margin:6px 0 0;gap:6px}.cd .count div{padding:6px 2px}.cd .count b{font-size:24px}
 .btn.sm{padding:6px 12px;font-size:13px}
 .back{display:inline-block;margin-bottom:14px;font-weight:700}
 .warn{font-size:13px;color:var(--muted);margin-top:10px}
@@ -64,7 +65,7 @@ const CONFIG = {
   whatsapp: "5591999999999",          // DDI+DDD+número, só dígitos
   pixChave: "sua-chave-pix-aqui",
   pixNome: "Nome do recebedor",
-  urlPlanilha: "https://script.google.com/macros/s/AKfycbx-V3vtj4Vf9Aie3qDqFi1QhK9SEf9fbusCKQRo0JMHa7RdKaCnCj5eZPJpoHS3Ueif/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
+  urlPlanilha: "https://script.google.com/macros/s/AKfycbxH1sDIC5x7ydgxBcIaVBCuyMaC1kn3mrgfsZUnFH6QMdcrS-L24nSAcFGJNPbXK28s/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
   modoTeste: true                     // true = libera o formulário mesmo fora do prazo (use só para testar; volte para false ao publicar)
 };
 /* flyer: coloque a imagem na mesma pasta do index.html e informe só o nome do arquivo. Sem imagem, aparece um bloco colorido. */
@@ -94,7 +95,9 @@ function flyer(e){const bg=e.flyer?`background-image:url('${e.flyer}')`:`backgro
 
 function home(){
   app.innerHTML=`<h1>Corridas de 2027</h1><p class="lead">Escolha a prova, veja os detalhes e faça sua inscrição em poucos minutos.</p>
-  <div class="grid">${EVENTOS.map(e=>`<a class="ev" href="#evento/${e.id}">${flyer(e)}<div class="meta"><strong>${esc(e.nome)}</strong>${dt(e.data)}<br>${esc(e.local)}${e.pacotes?"":"<br><small>Detalhes em breve</small>"}</div></a>`).join("")}</div>`;
+  <div class="grid">${EVENTOS.map(e=>`<a class="ev" href="#evento/${e.id}"><div class="cd" data-id="${e.id}">${cd(e)}</div>${flyer(e)}<div class="meta"><strong>${esc(e.nome)}</strong>${dt(e.data)}<br>${esc(e.local)}${e.pacotes?"":"<br><small>Detalhes em breve</small>"}</div></a>`).join("")}</div>`;
+  clearInterval(window._t);
+  window._t=setInterval(()=>document.querySelectorAll(".cd[data-id]").forEach(el=>{const e=EVENTOS.find(x=>x.id===el.dataset.id);if(e)el.innerHTML=cd(e)}),1000);
 }
 
 function premios(p){const t=(tit,l)=>`<div><h3>${tit}</h3><table>${l.map((v,i)=>`<tr><td>${i+1}º lugar</td><td><b>${v}</b></td></tr>`).join("")}</table></div>`;
@@ -123,7 +126,7 @@ function evento(id){
   const upd=()=>{const i=+document.querySelector("input[name=pk]:checked").value;$("#tot").textContent=brl(e.pacotes[i].p)};
   app.querySelectorAll("input[name=pk]").forEach(r=>r.onchange=upd);upd();
   $("#f").onsubmit=async ev=>{ev.preventDefault();
-    if(e.abre&&!CONFIG.modoTeste){const n=new Date();if(n<new Date(e.abre)||n>=new Date(e.fecha))return}
+    if(e.abre&&!CONFIG.modoTeste){const n=new Date();if(n<new Date(e.abre)||n>=new Date(e.fecha)){$("#err").textContent="As inscrições não estão abertas no momento.";return}}
     const v=id=>$("#"+id).value.trim(), cpf=v("cpf").replace(/\D/g,""), cel=v("cel").replace(/\D/g,"");
     if(!v("nome")||!v("sob")||!/.+@.+\..+/.test(v("email"))||cpf.length!==11||cel.length<10){$("#err").textContent="Preencha todos os campos. CPF com 11 dígitos e celular com DDD.";return}
     if(!/^https:\/\/script\.google\.com\//.test(CONFIG.urlPlanilha)){$("#err").textContent="Inscrições ainda não configuradas. Avise o organizador.";return}
@@ -141,17 +144,20 @@ function evento(id){
 }
 
 function falta(n,t){
-  let m=(t.getFullYear()-n.getFullYear())*12+t.getMonth()-n.getMonth();
-  const mais=k=>{const r=new Date(n);r.setDate(1);r.setMonth(r.getMonth()+k);
-    r.setDate(Math.min(n.getDate(),new Date(r.getFullYear(),r.getMonth()+1,0).getDate()));return r};
-  let ref=mais(m); if(ref>t){m--;ref=mais(m)}
-  let ms=Math.floor((t-ref)/1000);
-  const d=Math.floor(ms/86400);ms%=86400;const h=Math.floor(ms/3600);ms%=3600;
-  return [m,d,h,Math.floor(ms/60),ms%60];
+  let s=Math.max(0,Math.floor((t-n)/1000));
+  const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;
+  return [d,h,Math.floor(s/60),s%60];
+}
+function cd(e){
+  if(!e.abre||!e.fecha)return "<small>Inscrições em breve</small>";
+  const n=new Date(),ab=new Date(e.abre),fe=new Date(e.fecha);
+  if(n>=fe)return "<small>Inscrições encerradas</small>";
+  const antes=n<ab,v=falta(n,antes?ab:fe),nm=["dias","horas","min","seg"];
+  return `<small>${antes?"Inscrições abrem em":"Inscrições encerram em"}</small><div class="count">${v.map((x,i)=>`<div><b>${String(x).padStart(2,"0")}</b><small>${nm[i]}</small></div>`).join("")}</div>`;
 }
 function janela(e){
   clearInterval(window._t);
-  if(!e.abre||!e.fecha||CONFIG.modoTeste)return;
+  if(!e.abre||!e.fecha)return;
   const ab=new Date(e.abre),fe=new Date(e.fecha),f=$("#f"),box=document.createElement("div");
   box.className="box";f.before(box);
   const fmt=d=>d.toLocaleString("pt-BR",{dateStyle:"long",timeStyle:"short"});
@@ -159,10 +165,10 @@ function janela(e){
   const tick=()=>{
     const n=new Date(),st=n<ab?"antes":n<fe?"aberta":"fim";
     if(est&&st!==est){evento(e.id);return}
-    if(!est&&st!=="aberta")f.remove();
+    if(!est&&st!=="aberta"&&!CONFIG.modoTeste)f.remove();
     est=st;
     if(st==="fim"){box.innerHTML="<h2>Inscrições encerradas</h2><p>O prazo de inscrição desta corrida terminou.</p>";clearInterval(window._t);return}
-    const v=falta(n,st==="antes"?ab:fe),nm=["meses","dias","horas","minutos","segundos"];
+    const v=falta(n,st==="antes"?ab:fe),nm=["dias","horas","minutos","segundos"];
     box.innerHTML=`<h2>${st==="antes"?"As inscrições abrem em":"As inscrições encerram em"}</h2>
     <div class="count" role="timer">${v.map((x,i)=>`<div><b>${String(x).padStart(2,"0")}</b><small>${nm[i]}</small></div>`).join("")}</div>
     <p class="warn">${st==="antes"?"Abertura: "+fmt(ab):"Encerramento: "+fmt(fe)}</p>`;
