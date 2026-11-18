@@ -44,6 +44,7 @@ input[type=text],input[type=email],input[type=password],select{width:100%;paddin
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 .wrap{overflow-x:auto}
+.btn.sm{padding:6px 12px;font-size:13px}
 .back{display:inline-block;margin-bottom:14px;font-weight:700}
 .warn{font-size:13px;color:var(--muted);margin-top:10px}
 </style>
@@ -79,6 +80,7 @@ const EVENTOS = [
 /* ============ 2) DADOS (demo: ficam só neste navegador) ============ */
 const store = {
   load(){try{return JSON.parse(localStorage.getItem("inscritos")||"[]")}catch(e){return[]}},
+  save(l){try{localStorage.setItem("inscritos",JSON.stringify(l))}catch(e){}},
   add(x){const l=this.load();l.push(x);try{localStorage.setItem("inscritos",JSON.stringify(l))}catch(e){}}
 };
 const $=s=>document.querySelector(s), app=$("#app");
@@ -144,10 +146,19 @@ function admin(){
   app.innerHTML=`<h1>Painel do organizador</h1><form class="box" id="lg"><label for="pw">Senha</label><input type="password" id="pw"><p class="warn" id="e2" role="alert"></p><button class="btn" type="submit">Entrar</button></form>`;
   $("#lg").onsubmit=ev=>{ev.preventDefault();
     if($("#pw").value!==CONFIG.senhaPainelDemo){$("#e2").textContent="Senha incorreta.";return}
-    const l=store.load();
-    app.innerHTML=`<h1>Inscritos</h1><p class="lead">${l.length} inscrição(ões) neste navegador (modo de demonstração).</p>
-    <div class="wrap"><table><tr><th>Evento</th><th>Nome</th><th>Categoria</th><th>Pacote</th><th>WhatsApp</th></tr>
-    ${l.length?l.map(x=>`<tr><td>${esc(x.evento)}</td><td>${esc(x.nome)}</td><td>${esc(x.categoria)}</td><td>${esc(x.pacote)} (${brl(x.valor)})</td><td><a target="_blank" rel="noopener" href="https://wa.me/55${esc(x.cel)}">${esc(x.cel)}</a></td></tr>`).join(""):`<tr><td colspan="5">Nenhuma inscrição ainda. Faça uma de teste na página de um evento.</td></tr>`}</table></div>`};
+    painel()};
+}
+
+function painel(){
+  const l=store.load(), pagos=l.filter(x=>x.pago).length;
+  app.innerHTML=`<h1>Inscritos</h1><p class="lead">${l.length} inscrição(ões), ${pagos} paga(s). Modo de demonstração: os dados ficam só neste navegador.</p>
+  <div class="wrap"><table><tr><th>Evento</th><th>Nome</th><th>Categoria</th><th>Pacote</th><th>WhatsApp</th><th>Pagamento</th><th></th></tr>
+  ${l.length?l.map((x,i)=>`<tr><td>${esc(x.evento)}</td><td>${esc(x.nome)}</td><td>${esc(x.categoria)}</td><td>${esc(x.pacote)} (${brl(x.valor)})</td><td><a target="_blank" rel="noopener" href="https://wa.me/55${esc(x.cel)}">${esc(x.cel)}</a></td>
+  <td><button class="btn sm ${x.pago?"":"alt"}" data-pg="${i}">${x.pago?"Pago ✓":"Pendente"}</button></td>
+  <td><button class="btn sm alt" data-del="${i}">Apagar</button></td></tr>`).join(""):`<tr><td colspan="7">Nenhuma inscrição ainda. Faça uma de teste na página de um evento.</td></tr>`}</table></div>`;
+  app.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{const l=store.load(),i=+b.dataset.pg;l[i].pago=!l[i].pago;store.save(l);painel()});
+  app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const l=store.load(),i=+b.dataset.del;
+    if(confirm("Apagar a inscrição de "+l[i].nome+"? Essa ação não pode ser desfeita.")){l.splice(i,1);store.save(l);painel()}});
 }
 
 function route(){const h=location.hash.slice(1);
