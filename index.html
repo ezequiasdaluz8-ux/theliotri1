@@ -65,7 +65,7 @@ const CONFIG = {
 const EVENTOS = [
   {id:"niver-rafa", nome:"Niver do Rafa", data:"2027-01-24", local:"Guarumã", cor:"#2a2410"},
   {id:"niver-thelio-tri", nome:"Niver Thelio Tri", data:"2027-04-18", hora:"06:00", concentracao:"05:30", local:"Praça Matriz, Acará", org:"Assessoria Thelio Tri", flyer:"flyer-niver-thelio-tri.jpg", cor:"#2a2410",
-   premiacao:"Dinheiro para os 5 primeiros e Top 10 com premiação e brindes.",
+   premiacao:"Dinheiro para os 5 primeiros e Top 10 feminino com premiação e brindes.",
    premios:{geral:["R$ 300","R$ 200","R$ 100","R$ 50","R$ 50"], top10:["R$ 100","R$ 100","R$ 100","R$ 100","R$ 100","Brinde","Brinde","Brinde","Brinde","Brinde"]},
    sobre:"Corrida de 5 km em comemoração ao aniversário do Thelio Tri. O kit inclui camisa, medalha e carbo gel.",
    categorias:["5 km Masculino","5 km Feminino"],
@@ -97,7 +97,7 @@ function home(){
 }
 
 function premios(p){const t=(tit,l)=>`<div><h3>${tit}</h3><table>${l.map((v,i)=>`<tr><td>${i+1}º lugar</td><td><b>${v}</b></td></tr>`).join("")}</table></div>`;
-  return `<div class="box"><h2>Premiação</h2><div class="row">${t("5 primeiros",p.geral)}${t("Top 10",p.top10)}</div></div>`}
+  return `<div class="box"><h2>Premiação</h2><div class="row">${t("5 primeiros",p.geral)}${t("Top 10 feminino",p.top10)}</div></div>`}
 
 function evento(id){
   const e=EVENTOS.find(x=>x.id===id); if(!e) return home();
