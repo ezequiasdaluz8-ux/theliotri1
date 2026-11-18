@@ -49,7 +49,7 @@ th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 </style>
 </head>
 <body>
-<header><a class="logo" href="#"><img src="flyers/logo.jpg" alt=""><b id="brand"></b></a><nav><a href="#">Eventos</a><a href="#admin">Organizador</a></nav></header>
+<header><a class="logo" href="#"><img src="logo.jpg" alt=""><b id="brand"></b></a><nav><a href="#">Eventos</a><a href="#admin">Organizador</a></nav></header>
 <main id="app"></main>
 
 <script>
@@ -61,10 +61,10 @@ const CONFIG = {
   pixNome: "Nome do recebedor",
   senhaPainelDemo: "trocar123"        // SÓ PARA TESTE. Na versão final o login vem do Supabase.
 };
-/* flyer: coloque a imagem na pasta flyers/ e informe o caminho. Sem imagem, aparece um bloco colorido. */
+/* flyer: coloque a imagem na mesma pasta do index.html e informe só o nome do arquivo. Sem imagem, aparece um bloco colorido. */
 const EVENTOS = [
   {id:"niver-rafa", nome:"Niver do Rafa", data:"2027-01-24", local:"Guarumã", cor:"#2a2410"},
-  {id:"niver-thelio-tri", nome:"Niver Thelio Tri", data:"2027-04-18", hora:"06:00", concentracao:"05:30", local:"Praça Matriz, Acará", org:"Assessoria Thelio Tri", flyer:"flyers/niver-thelio-tri.jpg", cor:"#2a2410",
+  {id:"niver-thelio-tri", nome:"Niver Thelio Tri", data:"2027-04-18", hora:"06:00", concentracao:"05:30", local:"Praça Matriz, Acará", org:"Assessoria Thelio Tri", flyer:"niver-thelio-tri.jpg", cor:"#2a2410",
    premiacao:"Dinheiro para os 5 primeiros e Top 10 com premiação e brindes.",
    premios:{geral:["R$ 300","R$ 200","R$ 100","R$ 50","R$ 50"], top10:["R$ 100","R$ 100","R$ 100","R$ 100","R$ 100","Brinde","Brinde","Brinde","Brinde","Brinde"]},
    sobre:"Corrida de 5 km em comemoração ao aniversário do Thelio Tri. O kit inclui camisa, medalha e carbo gel.",
