@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corridas 2027 | Assessoria Thelio Tri</title>
+<style>
+:root{--bg:#0d0d0d;--card:#1a1a17;--ink:#f3f0e6;--muted:#a79f8b;--line:#3d3718;--accent:#f5b800;--accent-ink:#111}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo img{height:46px;width:auto}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Trebuchet MS",Verdana,sans-serif}
+a{color:inherit}
+header{background:#000;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+header b{font:800 20px/1 Impact,"Arial Narrow",sans-serif;letter-spacing:.5px}
+nav a{margin-left:16px;text-decoration:none;font-weight:700}
+main{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+h1,h2,h3{font-family:Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:.3px;margin:0 0 10px}
+h1{font-size:clamp(34px,7vw,56px);line-height:1}
+.lead{color:var(--muted);max-width:52ch;margin:0 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px}
+.ev{background:var(--card);border:1px solid var(--line);text-decoration:none;display:block}
+.flyer{aspect-ratio:4/5;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff;background-size:cover;background-position:center}
+.flyer .d{font:400 44px/1 Impact,sans-serif}
+.flyer .n{font-weight:700}
+.ev .meta{padding:12px 14px;font-size:14px}
+.ev .meta strong{display:block;font-size:16px}
+.btn{display:inline-block;background:var(--accent);color:var(--accent-ink);border:0;padding:12px 22px;font:700 15px inherit;font-family:inherit;cursor:pointer;text-decoration:none}
+.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.two{display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:28px;align-items:start}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+dl{margin:0;display:grid;grid-template-columns:110px 1fr;gap:8px 12px;border-top:1px dashed var(--line);padding-top:12px}
+dt{color:var(--muted)}dd{margin:0;font-weight:700}
+.box{background:var(--card);border:1px solid var(--line);padding:18px;margin-top:20px}
+.pk{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.pk input{margin-right:10px}
+label{display:block;font-weight:700;font-size:14px;margin:14px 0 4px}
+input[type=text],input[type=email],input[type=password],select{width:100%;padding:11px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+.pix{font:700 17px/1.3 monospace;word-break:break-all;background:var(--bg);border:1px dashed var(--ink);padding:12px;margin:10px 0}
+.total{display:flex;justify-content:space-between;font-size:20px;font-weight:800;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+.wrap{overflow-x:auto}
+.back{display:inline-block;margin-bottom:14px;font-weight:700}
+.warn{font-size:13px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<header><a class="logo" href="#"><img src="flyers/logo.jpg" alt=""><b id="brand"></b></a><nav><a href="#">Eventos</a><a href="#admin">Organizador</a></nav></header>
+<main id="app"></main>
+
+<script>
+/* ============ 1) EDITE AQUI ============ */
+const CONFIG = {
+  nome: "Assessoria Thelio Tri",
+  whatsapp: "5591999999999",          // DDI+DDD+número, só dígitos
+  pixChave: "sua-chave-pix-aqui",
+  pixNome: "Nome do recebedor",
+  senhaPainelDemo: "trocar123"        // SÓ PARA TESTE. Na versão final o login vem do Supabase.
+};
+/* flyer: coloque a imagem na pasta flyers/ e informe o caminho. Sem imagem, aparece um bloco colorido. */
+const EVENTOS = [
+  {id:"niver-rafa", nome:"Niver do Rafa", data:"2027-01-24", local:"Guarumã", cor:"#2a2410"},
+  {id:"niver-thelio-tri", nome:"Niver Thelio Tri", data:"2027-04-18", hora:"06:00", concentracao:"05:30", local:"Praça Matriz, Acará", org:"Assessoria Thelio Tri", flyer:"flyers/niver-thelio-tri.jpg", cor:"#2a2410",
+   premiacao:"Dinheiro para os 5 primeiros e Top 10 com premiação e brindes.",
+   premios:{geral:["R$ 300","R$ 200","R$ 100","R$ 50","R$ 50"], top10:["R$ 100","R$ 100","R$ 100","R$ 100","R$ 100","Brinde","Brinde","Brinde","Brinde","Brinde"]},
+   sobre:"Corrida de 5 km em comemoração ao aniversário do Thelio Tri. O kit inclui camisa, medalha e carbo gel.",
+   categorias:["5 km Masculino","5 km Feminino"],
+   pacotes:[{n:"Kit completo",p:80,d:"Camisa, medalha e carbo gel"}]},
+  {id:"corrida-kids", nome:"Corrida Kids", data:"2027-07-11", local:"Acará", cor:"#2a2410"},
+  {id:"corrida-verao", nome:"Corrida de Verão", data:"2027-07-25", local:"Acará", cor:"#2a2410"},
+  {id:"corrida-mata", nome:"Corrida da Mata", data:"2027-09-12", local:"Acará", cor:"#2a2410"},
+  {id:"reis-rainhas", nome:"Reis e Rainhas", data:"2027-11-07", local:"Acará", cor:"#2a2410"},
+  {id:"corrida-bem", nome:"Corrida do Bem", data:"2027-12-12", local:"Acará", cor:"#2a2410"}
+];
+/* ============ 2) DADOS (demo: ficam só neste navegador) ============ */
+const store = {
+  load(){try{return JSON.parse(localStorage.getItem("inscritos")||"[]")}catch(e){return[]}},
+  add(x){const l=this.load();l.push(x);try{localStorage.setItem("inscritos",JSON.stringify(l))}catch(e){}}
+};
+const $=s=>document.querySelector(s), app=$("#app");
+const brl=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const dt=d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+const sh=d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}).replace(".","");
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+$("#brand").textContent=CONFIG.nome;
+
+function flyer(e){const bg=e.flyer?`background-image:url('${e.flyer}')`:`background:${e.cor}`;
+  return `<div class="flyer" style="${bg}">${e.flyer?"":`<span class="d">${sh(e.data)}</span><span class="n">${esc(e.nome)}</span>`}</div>`}
+
+function home(){
+  app.innerHTML=`<h1>Corridas de 2027</h1><p class="lead">Escolha a prova, veja os detalhes e faça sua inscrição em poucos minutos.</p>
+  <div class="grid">${EVENTOS.map(e=>`<a class="ev" href="#evento/${e.id}">${flyer(e)}<div class="meta"><strong>${esc(e.nome)}</strong>${dt(e.data)}<br>${esc(e.local)}${e.pacotes?"":"<br><small>Detalhes em breve</small>"}</div></a>`).join("")}</div>`;
+}
+
+function premios(p){const t=(tit,l)=>`<div><h3>${tit}</h3><table>${l.map((v,i)=>`<tr><td>${i+1}º lugar</td><td><b>${v}</b></td></tr>`).join("")}</table></div>`;
+  return `<div class="box"><h2>Premiação</h2><div class="row">${t("5 primeiros",p.geral)}${t("Top 10",p.top10)}</div></div>`}
+
+function evento(id){
+  const e=EVENTOS.find(x=>x.id===id); if(!e) return home();
+  if(!e.pacotes){app.innerHTML=`<a class="back" href="#">‹ Todos os eventos</a><div class="two"><div>${flyer(e)}</div><div><h1>${esc(e.nome)}</h1><dl><dt>Data</dt><dd>${dt(e.data)}</dd><dt>Local</dt><dd>${esc(e.local)}</dd></dl><p>Flyer, valores e inscrições serão divulgados em breve.</p></div></div>`;return}
+  app.innerHTML=`<a class="back" href="#">‹ Todos os eventos</a>
+  <div class="two"><div>${flyer(e)}</div><div>
+    <h1>${esc(e.nome)}</h1>
+    <dl><dt>Data</dt><dd>${dt(e.data)}</dd><dt>Concentração</dt><dd>${e.concentracao}</dd><dt>Largada</dt><dd>${e.hora}</dd><dt>Local</dt><dd>${esc(e.local)}</dd><dt>Organização</dt><dd>${esc(e.org)}</dd><dt>Premiação</dt><dd>${esc(e.premiacao)}</dd></dl>
+    <p>${esc(e.sobre)}</p></div></div>
+  ${e.premios?premios(e.premios):""}
+  <form class="box" id="f" novalidate><h2>Inscrição</h2>
+    <div class="row"><div><label for="nome">Nome</label><input type="text" id="nome" required></div><div><label for="sob">Sobrenome</label><input type="text" id="sob" required></div></div>
+    <label for="email">E-mail</label><input type="email" id="email" required>
+    <div class="row"><div><label for="cpf">CPF</label><input type="text" id="cpf" inputmode="numeric" required></div><div><label for="cel">Celular com DDD</label><input type="text" id="cel" inputmode="tel" placeholder="91999998888" required></div></div>
+    <div class="row"><div><label for="gen">Gênero</label><select id="gen"><option>Masculino</option><option>Feminino</option></select></div>
+    <div><label for="cat">Categoria</label><select id="cat">${e.categorias.map(c=>`<option>${esc(c)}</option>`).join("")}</select></div></div>
+    <label>Pacote</label>${e.pacotes.map((p,i)=>`<label class="pk"><span><input type="radio" name="pk" value="${i}" ${i?"":"checked"}>${esc(p.n)}<br><small>${esc(p.d)}</small></span><b>${brl(p.p)}</b></label>`).join("")}
+    <div class="total"><span>Total</span><span id="tot"></span></div>
+    <p class="warn" id="err" role="alert"></p>
+    <button class="btn" type="submit">Finalizar inscrição</button></form>`;
+  const upd=()=>{const i=+document.querySelector("input[name=pk]:checked").value;$("#tot").textContent=brl(e.pacotes[i].p)};
+  app.querySelectorAll("input[name=pk]").forEach(r=>r.onchange=upd);upd();
+  $("#f").onsubmit=ev=>{ev.preventDefault();
+    const v=id=>$("#"+id).value.trim(), cpf=v("cpf").replace(/\D/g,""), cel=v("cel").replace(/\D/g,"");
+    if(!v("nome")||!v("sob")||!/.+@.+\..+/.test(v("email"))||cpf.length!==11||cel.length<10){$("#err").textContent="Preencha todos os campos. CPF com 11 dígitos e celular com DDD.";return}
+    const p=e.pacotes[+document.querySelector("input[name=pk]:checked").value];
+    const r={evento:e.nome,nome:v("nome")+" "+v("sob"),email:v("email"),cpf,cel,genero:v("gen"),categoria:v("cat"),pacote:p.n,valor:p.p,em:new Date().toLocaleString("pt-BR")};
+    store.add(r);pagar(e,r);scrollTo(0,0)};
+}
+
+function pagar(e,r){
+  const msg=encodeURIComponent(`Olá! Segue o comprovante da inscrição de ${r.nome} na ${e.nome} (${r.categoria}, ${r.pacote} - ${brl(r.valor)}).`);
+  app.innerHTML=`<h1>Inscrição recebida</h1><p class="lead">${esc(r.nome)}, falta só o pagamento para confirmar sua vaga em ${esc(e.nome)}.</p>
+  <div class="box"><h2>1. Pague com PIX</h2><div class="total"><span>Valor</span><span>${brl(r.valor)}</span></div>
+  <div>Chave PIX</div><div class="pix" id="pix">${esc(CONFIG.pixChave)}</div><div>Recebedor: <b>${esc(CONFIG.pixNome)}</b></div><br>
+  <button class="btn alt" id="cp">Copiar chave PIX</button></div>
+  <div class="box"><h2>2. Envie o comprovante</h2><p>Depois de pagar, mande o comprovante para o organizador no WhatsApp.</p>
+  <a class="btn" target="_blank" rel="noopener" href="https://wa.me/${CONFIG.whatsapp}?text=${msg}">Enviar comprovante no WhatsApp</a></div>
+  <p><a class="back" href="#">‹ Voltar aos eventos</a></p>`;
+  $("#cp").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(CONFIG.pixChave).then(()=>$("#cp").textContent="Chave copiada")};
+}
+
+function admin(){
+  app.innerHTML=`<h1>Painel do organizador</h1><form class="box" id="lg"><label for="pw">Senha</label><input type="password" id="pw"><p class="warn" id="e2" role="alert"></p><button class="btn" type="submit">Entrar</button></form>`;
+  $("#lg").onsubmit=ev=>{ev.preventDefault();
+    if($("#pw").value!==CONFIG.senhaPainelDemo){$("#e2").textContent="Senha incorreta.";return}
+    const l=store.load();
+    app.innerHTML=`<h1>Inscritos</h1><p class="lead">${l.length} inscrição(ões) neste navegador (modo de demonstração).</p>
+    <div class="wrap"><table><tr><th>Evento</th><th>Nome</th><th>Categoria</th><th>Pacote</th><th>WhatsApp</th></tr>
+    ${l.length?l.map(x=>`<tr><td>${esc(x.evento)}</td><td>${esc(x.nome)}</td><td>${esc(x.categoria)}</td><td>${esc(x.pacote)} (${brl(x.valor)})</td><td><a target="_blank" rel="noopener" href="https://wa.me/55${esc(x.cel)}">${esc(x.cel)}</a></td></tr>`).join(""):`<tr><td colspan="5">Nenhuma inscrição ainda. Faça uma de teste na página de um evento.</td></tr>`}</table></div>`};
+}
+
+function route(){const h=location.hash.slice(1);
+  if(h==="admin")admin();else if(h.startsWith("evento/"))evento(h.slice(7));else home();}
+addEventListener("hashchange",route);route();
+</script>
+</body>
+</html>
