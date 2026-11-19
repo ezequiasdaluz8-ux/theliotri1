@@ -63,6 +63,7 @@ th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 .btn.sm{padding:6px 12px;font-size:13px}
 .back{display:inline-block;margin-bottom:14px;font-weight:700}
 .warn{font-size:13px;color:var(--muted);margin-top:10px}
+.st{display:inline-block;padding:3px 10px;font-weight:800;font-size:13px;letter-spacing:.4px;text-transform:uppercase}.st.p{background:var(--accent);color:#111}.st.ok{background:#1f8f4a;color:#fff}.rec{margin-top:20px}@media print{.st{border:1px solid #000;color:#000!important;background:#fff!important}}
 </style>
 </head>
 <body>
@@ -177,7 +178,7 @@ function evento(id){
     try{
       const res=await fetch(CONFIG.urlPlanilha,{method:"POST",body:JSON.stringify(r)});
       const j=await res.json();
-      if(!j.ok){volta(j.erro||"Não foi possível registrar a inscrição.");return}
+      if(!j.ok){volta(j.erro||"Não foi possível registrar a inscrição.");return}r.numero=j.numero||"";
     }catch(x){volta("Não foi possível enviar a inscrição. Verifique a internet e tente novamente.");return}
     pagar(e,r);scrollTo(0,0)};
   janela(e);
@@ -216,49 +217,55 @@ function janela(e){
   tick();window._t=setInterval(tick,1000);
 }
 
+function ligaCopiar(){document.querySelectorAll(".cp").forEach(b=>b.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(b.dataset.k).then(()=>b.textContent="Chave copiada")})}
+
+/* Comprovante de inscrição: o mesmo cartão serve para "pendente" e "pago" */
+function recibo(i,cpf){
+  const ev=EVENTOS.find(x=>x.nome===i.evento)||{},pago=!!i.pago;
+  const C={pixChave:ev.pixChave||CONFIG.pixChave,pixBanco:ev.pixBanco||CONFIG.pixBanco,pixNome:ev.pixNome||CONFIG.pixNome,whatsapp:ev.whatsapp||CONFIG.whatsapp};
+  const valor=Number(i.valor)||0;
+  const msg=encodeURIComponent(`Olá! Segue o comprovante do PIX da inscrição de ${i.nome} na ${i.evento} (${i.categoria}, camisa ${i.camisa}, ${i.pacote} - ${brl(valor)}).`);
+  return `<div class="box comp rec ${pago?"":"pend"}"><h2>Comprovante de inscrição</h2>
+  <p><b>Nº ${esc(i.numero||"—")}</b> · <span class="st ${pago?"ok":"p"}">${pago?"Pagamento confirmado":"Pagamento pendente"}</span></p>
+  <dl><dt>Evento</dt><dd>${esc(i.evento)}</dd>${ev.data?`<dt>Data</dt><dd>${dt(ev.data)}</dd>${ev.hora?`<dt>Largada</dt><dd>${esc(ev.hora)}</dd>`:""}<dt>Local</dt><dd>${esc(ev.local)}</dd>`:""}
+  <dt>Participante</dt><dd>${esc(i.nome)}</dd><dt>CPF</dt><dd>***.${cpf.slice(3,6)}.${cpf.slice(6,9)}-**</dd>
+  <dt>Categoria</dt><dd>${esc(i.categoria)}</dd><dt>Camisa</dt><dd>${esc(i.camisa)}</dd><dt>Pacote</dt><dd>${esc(i.pacote)}</dd>
+  <dt>${pago?"Valor pago":"Valor a pagar"}</dt><dd>${brl(valor)}</dd><dt>Inscrição em</dt><dd>${esc(i.em)}</dd></dl>
+  ${pago
+   ?`<p class="warn">${esc(CONFIG.nome)} · Guarde este comprovante.</p><button class="btn noprint" onclick="print()">Baixar / imprimir (PDF)</button>`
+   :`<div class="noprint"><p>Sua inscrição está <b>registrada</b>, mas a vaga só é confirmada depois do pagamento. Pague com PIX e envie o comprovante para a organização.</p>
+     <div>Chave PIX</div><div class="pix">${esc(C.pixChave)}</div><div>Recebedor: <b>${esc(C.pixNome)}</b></div><div>Banco: <b>${esc(C.pixBanco)}</b></div><br>
+     <button class="btn alt cp" data-k="${esc(C.pixChave)}">Copiar chave PIX</button> <a class="btn" target="_blank" rel="noopener" href="https://wa.me/${C.whatsapp}?text=${msg}">Enviar comprovante no WhatsApp</a></div>`}
+  </div>`;
+}
+
 function pagar(e,r){
-  const C={pixChave:e.pixChave||CONFIG.pixChave,pixBanco:e.pixBanco||CONFIG.pixBanco,pixNome:e.pixNome||CONFIG.pixNome,whatsapp:e.whatsapp||CONFIG.whatsapp};
-  const msg=encodeURIComponent(`Olá! Segue o comprovante da inscrição de ${r.nome} na ${e.nome} (${r.categoria}, camisa ${r.camisa}, ${r.pacote} - ${brl(r.valor)}).`);
-  app.innerHTML=`<h1>Inscrição recebida</h1><p class="lead">${esc(r.nome)}, falta só o pagamento para confirmar sua vaga em ${esc(e.nome)}.</p>
-  <div class="box"><h2>1. Pague com PIX</h2><div class="total"><span>Valor</span><span>${brl(r.valor)}</span></div>
-  <div>Chave PIX</div><div class="pix" id="pix">${esc(C.pixChave)}</div><div>Recebedor: <b>${esc(C.pixNome)}</b></div><div>Banco: <b>${esc(C.pixBanco)}</b></div><br>
-  <button class="btn alt" id="cp">Copiar chave PIX</button></div>
-  <div class="box"><h2>2. Envie o comprovante</h2><p>Depois de pagar, mande o comprovante para o organizador no WhatsApp.</p>
-  <a class="btn" target="_blank" rel="noopener" href="https://wa.me/${C.whatsapp}?text=${msg}">Enviar comprovante no WhatsApp</a></div>
-  <p class="warn">Depois que a organização confirmar o pagamento, seu comprovante de inscrição fica disponível em <a href="#comprovante">Comprovante</a>, com seu CPF e e-mail.</p>
+  app.innerHTML=`<h1>Inscrição recebida</h1><p class="lead">${esc(r.nome)}, sua inscrição em ${esc(e.nome)} foi registrada. Falta só o pagamento para confirmar a vaga.</p>
+  ${recibo(r,r.cpf)}
+  <p class="warn">Para rever este comprovante depois, use <a href="#comprovante">Comprovante</a> com o seu CPF. Quando a organização confirmar o pagamento, ele passa a aparecer como pago.</p>
   <p><a class="back" href="#">‹ Voltar aos eventos</a></p>`;
-  $("#cp").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(C.pixChave).then(()=>$("#cp").textContent="Chave copiada")};
+  ligaCopiar();
 }
 
 function comprovante(){
-  app.innerHTML=`<a class="back" href="#">‹ Todos os eventos</a><h1>Comprovante de inscrição</h1><p class="lead">Escolha o evento e informe o CPF e o e-mail usados na inscrição. O comprovante é liberado depois que a organização confirmar o seu pagamento.</p>
+  app.innerHTML=`<a class="back" href="#">‹ Todos os eventos</a><h1>Comprovante de inscrição</h1><p class="lead">Escolha o evento e informe o CPF usado na inscrição. Você vê se a inscrição está com pagamento pendente ou confirmado.</p>
   <form class="box noprint" id="cf" novalidate><label for="cev">Evento</label><select id="cev">${EVENTOS.filter(x=>x.pacotes).map(x=>`<option>${esc(x.nome)}</option>`).join("")}</select>
-  <label for="ccpf">CPF</label><input type="text" id="ccpf" inputmode="numeric" required>
-  <label for="cmail">E-mail</label><input type="email" id="cmail" required>
+  <label for="ccpf">CPF</label><input type="text" id="ccpf" inputmode="numeric" autocomplete="off" required>
   <p class="warn" id="cerr" role="alert"></p><button class="btn" type="submit">Consultar</button></form><div id="cres"></div>`;
   $("#cf").onsubmit=async ev=>{ev.preventDefault();
-    const cpf=$("#ccpf").value.replace(/\D/g,""),mail=$("#cmail").value.trim(),err=$("#cerr"),res=$("#cres");
+    const cpf=$("#ccpf").value.replace(/\D/g,""),err=$("#cerr"),res=$("#cres");
     res.innerHTML="";
-    if(cpf.length!==11||!/.+@.+\..+/.test(mail)){err.textContent="Informe o CPF com 11 dígitos e o e-mail da inscrição.";return}
+    if(cpf.length!==11){err.textContent="Informe o CPF com 11 dígitos.";return}
     if(!/^https:\/\/script\.google\.com\//.test(CONFIG.urlPlanilha)){err.textContent="Consulta ainda não configurada. Avise o organizador.";return}
     const btn=ev.target.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Consultando...";err.textContent="";
     let j;
-    try{j=await (await fetch(CONFIG.urlPlanilha+"?acao=comprovante&evento="+encodeURIComponent($("#cev").value)+"&cpf="+cpf+"&email="+encodeURIComponent(mail))).json()}
+    try{j=await (await fetch(CONFIG.urlPlanilha+"?acao=comprovante&evento="+encodeURIComponent($("#cev").value)+"&cpf="+cpf+"&t="+Date.now())).json()}
     catch(x){err.textContent="Não foi possível consultar. Verifique a internet e tente novamente.";btn.disabled=false;btn.textContent="Consultar";return}
     btn.disabled=false;btn.textContent="Consultar";
     if(!j.ok){err.textContent=j.erro||"Não foi possível consultar.";return}
-    if(!j.itens.length){err.textContent="Nenhuma inscrição encontrada com esse CPF e e-mail.";return}
-    res.innerHTML=j.itens.map(i=>{
-      if(!i.pago){const m=encodeURIComponent(`Olá! Fiz a inscrição de ${i.nome} na ${i.evento} e gostaria de confirmar meu pagamento.`);
-        return `<div class="box pend noprint"><h2>${esc(i.evento)}</h2><p>Inscrição encontrada, mas o pagamento <b>ainda não foi confirmado</b>. Se você já pagou, envie o comprovante do PIX para a organização.</p><a class="btn" target="_blank" rel="noopener" href="https://wa.me/${((EVENTOS.find(x=>x.nome===i.evento)||{}).whatsapp)||CONFIG.whatsapp}?text=${m}">Enviar comprovante no WhatsApp</a></div>`}
-      const ev=EVENTOS.find(x=>x.nome===i.evento);
-      return `<div class="box comp"><h2>Comprovante de inscrição</h2><p><b>Nº ${esc(i.numero)}</b> · Pagamento confirmado</p>
-      <dl><dt>Evento</dt><dd>${esc(i.evento)}</dd>${ev?`<dt>Data</dt><dd>${dt(ev.data)}</dd>${ev.hora?`<dt>Largada</dt><dd>${esc(ev.hora)}</dd>`:""}<dt>Local</dt><dd>${esc(ev.local)}</dd>`:""}
-      <dt>Participante</dt><dd>${esc(i.nome)}</dd><dt>CPF</dt><dd>***.${cpf.slice(3,6)}.${cpf.slice(6,9)}-**</dd>
-      <dt>Categoria</dt><dd>${esc(i.categoria)}</dd><dt>Camisa</dt><dd>${esc(i.camisa)}</dd><dt>Pacote</dt><dd>${esc(i.pacote)}</dd>
-      <dt>Valor pago</dt><dd>${brl(i.valor)}</dd><dt>Inscrição em</dt><dd>${esc(i.em)}</dd></dl>
-      <p class="warn">${esc(CONFIG.nome)} · Guarde este comprovante.</p>
-      <button class="btn noprint" onclick="print()">Baixar / imprimir (PDF)</button></div>`}).join("");
+    if(!j.itens||!j.itens.length){err.textContent="Nenhuma inscrição encontrada com esse CPF neste evento.";return}
+    res.innerHTML=j.itens.map(i=>recibo(i,cpf)).join("");
+    ligaCopiar();
   };
 }
 
