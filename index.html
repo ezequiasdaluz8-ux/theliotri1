@@ -49,23 +49,26 @@ th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 .count b{display:block;font:400 30px/1 Impact,sans-serif;color:var(--accent)}
 .count small{color:var(--muted);font-size:11px}
 .cd{padding:10px 12px;background:#000;border-bottom:1px solid var(--line);text-align:center;min-height:86px}.cd>small{display:block;color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.cd .count{margin:6px 0 0;gap:6px}.cd .count div{padding:6px 2px}.cd .count b{font-size:24px}
+.comp dl{grid-template-columns:130px 1fr}.pend{border-color:var(--accent)}
+@media print{header,.back,.noprint,form,.lead{display:none!important}body,main{background:#fff!important;color:#000!important}.box{background:#fff!important;color:#000!important;border:1px solid #000!important;break-inside:avoid}dt,.warn{color:#333!important}h1{color:#000}}
 .btn.sm{padding:6px 12px;font-size:13px}
 .back{display:inline-block;margin-bottom:14px;font-weight:700}
 .warn{font-size:13px;color:var(--muted);margin-top:10px}
 </style>
 </head>
 <body>
-<header><a class="logo" href="#"><img src="logo.jpg" alt=""><b id="brand"></b></a><nav><a href="#">Eventos</a></nav></header>
+<header><a class="logo" href="#"><img src="logo.jpg" alt=""><b id="brand"></b></a><nav><a href="#">Eventos</a><a href="#comprovante">Comprovante</a></nav></header>
 <main id="app"></main>
 
 <script>
 /* ============ 1) EDITE AQUI ============ */
 const CONFIG = {
   nome: "Assessoria Thelio Tri",
-  whatsapp: "5591999999999",          // DDI+DDD+número, só dígitos
-  pixChave: "sua-chave-pix-aqui",
-  pixNome: "Nome do recebedor",
-  urlPlanilha: "https://script.google.com/macros/s/AKfycbxH1sDIC5x7ydgxBcIaVBCuyMaC1kn3mrgfsZUnFH6QMdcrS-L24nSAcFGJNPbXK28s/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
+  whatsapp: "5591986451840",          // DDI+DDD+número, só dígitos
+  pixChave: "Thtrindade12@gmail.com",
+  pixBanco: "Bradesco",
+  pixNome: "Thelio Trindade de Moraes",
+  urlPlanilha: "https://script.google.com/macros/s/AKfycbxJHdTSbkT4sLDxXl5s7serkGPejfUv_XOSorM7sDWyCEuzJfBsYkzrlZiCUDJ3yx2U/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
   modoTeste: true                     // true = libera o formulário mesmo fora do prazo (use só para testar; volte para false ao publicar)
 };
 /* flyer: coloque a imagem na mesma pasta do index.html e informe só o nome do arquivo. Sem imagem, aparece um bloco colorido. */
@@ -180,16 +183,48 @@ function pagar(e,r){
   const msg=encodeURIComponent(`Olá! Segue o comprovante da inscrição de ${r.nome} na ${e.nome} (${r.categoria}, camisa ${r.camisa}, ${r.pacote} - ${brl(r.valor)}).`);
   app.innerHTML=`<h1>Inscrição recebida</h1><p class="lead">${esc(r.nome)}, falta só o pagamento para confirmar sua vaga em ${esc(e.nome)}.</p>
   <div class="box"><h2>1. Pague com PIX</h2><div class="total"><span>Valor</span><span>${brl(r.valor)}</span></div>
-  <div>Chave PIX</div><div class="pix" id="pix">${esc(CONFIG.pixChave)}</div><div>Recebedor: <b>${esc(CONFIG.pixNome)}</b></div><br>
+  <div>Chave PIX</div><div class="pix" id="pix">${esc(CONFIG.pixChave)}</div><div>Recebedor: <b>${esc(CONFIG.pixNome)}</b></div><div>Banco: <b>${esc(CONFIG.pixBanco)}</b></div><br>
   <button class="btn alt" id="cp">Copiar chave PIX</button></div>
   <div class="box"><h2>2. Envie o comprovante</h2><p>Depois de pagar, mande o comprovante para o organizador no WhatsApp.</p>
   <a class="btn" target="_blank" rel="noopener" href="https://wa.me/${CONFIG.whatsapp}?text=${msg}">Enviar comprovante no WhatsApp</a></div>
+  <p class="warn">Depois que a organização confirmar o pagamento, seu comprovante de inscrição fica disponível em <a href="#comprovante">Comprovante</a>, com seu CPF e e-mail.</p>
   <p><a class="back" href="#">‹ Voltar aos eventos</a></p>`;
   $("#cp").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(CONFIG.pixChave).then(()=>$("#cp").textContent="Chave copiada")};
 }
 
+function comprovante(){
+  app.innerHTML=`<a class="back" href="#">‹ Todos os eventos</a><h1>Comprovante de inscrição</h1><p class="lead">Informe o CPF e o e-mail usados na inscrição. O comprovante é liberado depois que a organização confirmar o seu pagamento.</p>
+  <form class="box noprint" id="cf" novalidate><label for="ccpf">CPF</label><input type="text" id="ccpf" inputmode="numeric" required>
+  <label for="cmail">E-mail</label><input type="email" id="cmail" required>
+  <p class="warn" id="cerr" role="alert"></p><button class="btn" type="submit">Consultar</button></form><div id="cres"></div>`;
+  $("#cf").onsubmit=async ev=>{ev.preventDefault();
+    const cpf=$("#ccpf").value.replace(/\D/g,""),mail=$("#cmail").value.trim(),err=$("#cerr"),res=$("#cres");
+    res.innerHTML="";
+    if(cpf.length!==11||!/.+@.+\..+/.test(mail)){err.textContent="Informe o CPF com 11 dígitos e o e-mail da inscrição.";return}
+    if(!/^https:\/\/script\.google\.com\//.test(CONFIG.urlPlanilha)){err.textContent="Consulta ainda não configurada. Avise o organizador.";return}
+    const btn=ev.target.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Consultando...";err.textContent="";
+    let j;
+    try{j=await (await fetch(CONFIG.urlPlanilha+"?acao=comprovante&cpf="+cpf+"&email="+encodeURIComponent(mail))).json()}
+    catch(x){err.textContent="Não foi possível consultar. Verifique a internet e tente novamente.";btn.disabled=false;btn.textContent="Consultar";return}
+    btn.disabled=false;btn.textContent="Consultar";
+    if(!j.ok){err.textContent=j.erro||"Não foi possível consultar.";return}
+    if(!j.itens.length){err.textContent="Nenhuma inscrição encontrada com esse CPF e e-mail.";return}
+    res.innerHTML=j.itens.map(i=>{
+      if(!i.pago){const m=encodeURIComponent(`Olá! Fiz a inscrição de ${i.nome} na ${i.evento} e gostaria de confirmar meu pagamento.`);
+        return `<div class="box pend noprint"><h2>${esc(i.evento)}</h2><p>Inscrição encontrada, mas o pagamento <b>ainda não foi confirmado</b>. Se você já pagou, envie o comprovante do PIX para a organização.</p><a class="btn" target="_blank" rel="noopener" href="https://wa.me/${CONFIG.whatsapp}?text=${m}">Enviar comprovante no WhatsApp</a></div>`}
+      const ev=EVENTOS.find(x=>x.nome===i.evento);
+      return `<div class="box comp"><h2>Comprovante de inscrição</h2><p><b>Nº ${esc(i.numero)}</b> · Pagamento confirmado</p>
+      <dl><dt>Evento</dt><dd>${esc(i.evento)}</dd>${ev?`<dt>Data</dt><dd>${dt(ev.data)}</dd>${ev.hora?`<dt>Largada</dt><dd>${esc(ev.hora)}</dd>`:""}<dt>Local</dt><dd>${esc(ev.local)}</dd>`:""}
+      <dt>Participante</dt><dd>${esc(i.nome)}</dd><dt>CPF</dt><dd>***.${cpf.slice(3,6)}.${cpf.slice(6,9)}-**</dd>
+      <dt>Categoria</dt><dd>${esc(i.categoria)}</dd><dt>Camisa</dt><dd>${esc(i.camisa)}</dd><dt>Pacote</dt><dd>${esc(i.pacote)}</dd>
+      <dt>Valor pago</dt><dd>${brl(i.valor)}</dd><dt>Inscrição em</dt><dd>${esc(i.em)}</dd></dl>
+      <p class="warn">${esc(CONFIG.nome)} · Guarde este comprovante.</p>
+      <button class="btn noprint" onclick="print()">Baixar / imprimir (PDF)</button></div>`}).join("");
+  };
+}
+
 function route(){clearInterval(window._t);const h=location.hash.slice(1);
-  if(h.startsWith("evento/"))evento(h.slice(7));else home();}
+  if(h.startsWith("evento/"))evento(h.slice(7));else if(h==="comprovante")comprovante();else home();}
 addEventListener("hashchange",route);route();
 </script>
 </body>
