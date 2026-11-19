@@ -21,6 +21,8 @@ h1{font-size:clamp(34px,7vw,56px);line-height:1}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px}
 .ev{background:var(--card);border:1px solid var(--line);text-decoration:none;display:block}
 .flyer{aspect-ratio:2/3;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff;background-size:cover;background-position:center}
+.fw{overflow:hidden}.flyer{transition:transform .35s ease;will-change:transform}.ev:hover .flyer,.fw:hover .flyer{transform:scale(1.06)}.ev{transition:border-color .25s}.ev:hover{border-color:var(--accent)}
+@media(prefers-reduced-motion:reduce){.flyer,.ev{transition:none}.ev:hover .flyer,.fw:hover .flyer{transform:none}}
 .flyer .d{font:400 44px/1 Impact,sans-serif}
 .flyer .n{font-weight:700}
 .ev .meta{padding:12px 14px;font-size:14px}
@@ -98,7 +100,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 $("#brand").textContent=CONFIG.nome;
 
 function flyer(e){const bg=(e.flyer?`background-image:url('${e.flyer}')`:`background:${e.cor}`)+(e.ratio?`;aspect-ratio:${e.ratio}`:"");
-  return `<div class="flyer" style="${bg}">${e.flyer?"":`<span class="d">${sh(e.data)}</span><span class="n">${esc(e.nome)}</span>`}</div>`}
+  return `<div class="fw"><div class="flyer" style="${bg}">${e.flyer?"":`<span class="d">${sh(e.data)}</span><span class="n">${esc(e.nome)}</span>`}</div></div>`}
 
 function home(){
   app.innerHTML=`<h1>Próximas corridas</h1><p class="lead">Escolha a prova, veja os detalhes e faça sua inscrição em poucos minutos.</p>
