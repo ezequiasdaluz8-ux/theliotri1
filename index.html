@@ -78,7 +78,7 @@ const CONFIG = {
   pixChave: "Thtrindade12@gmail.com",
   pixBanco: "Bradesco",
   pixNome: "Thelio Trindade de Moraes",
-  urlPlanilha: "https://script.google.com/macros/s/AKfycbxLh9266Q7EPJEYwcXRyrG4CH-JGphT35OIKR1D02LNceb-Lp4Jdh2UOEnHJ2etqYXR/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
+  urlPlanilha: "https://script.google.com/macros/s/AKfycbyKG6LWZ2d_zJkDMbXEtV3TRe6iIYV8uubtRV71HcTQKwQFrLSKAQElHxTFuDUKQwOq/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
   modoTeste: false                    // false = formulário só aparece dentro do prazo de inscrição (versão final). true = libera tudo, só para testar
 };
 /* Opcional em cada evento: pixChave, pixBanco, pixNome e whatsapp. Se faltar, usa os dados do CONFIG acima. */
@@ -269,8 +269,63 @@ function comprovante(){
   };
 }
 
+/* ============ ÁREA DO ORGANIZADOR (link próprio por evento) ============ */
+async function organizador(id,senha){
+  clearInterval(window._t);
+  const e=EVENTOS.find(x=>x.id===id);
+  if(!e){app.innerHTML='<h1>Evento não encontrado</h1>';return}
+  const pedeSenha=m=>{
+    app.innerHTML=`<h1>Área do organizador</h1><p class="lead">${esc(e.nome)}</p><form class="box" id="of"><label for="osenha">Senha do evento</label><input type="password" id="osenha" autocomplete="current-password" required><p class="warn" id="oerr" role="alert">${esc(m||"")}</p><button class="btn" type="submit">Entrar</button></form>`;
+    $("#of").onsubmit=ev=>{ev.preventDefault();organizador(id,$("#osenha").value.trim())};
+  };
+  if(!senha){pedeSenha();return}
+  if(!/^https:\/\/script\.google\.com\//.test(CONFIG.urlPlanilha)){app.innerHTML='<h1>Não configurado</h1>';return}
+  app.innerHTML=`<h1>${esc(e.nome)}</h1><p class="lead">Carregando inscritos...</p>`;
+  const q="id="+encodeURIComponent(id)+"&evento="+encodeURIComponent(e.nome)+"&senha="+encodeURIComponent(senha);
+  let itens=[],filtro="todos",busca="";
+  const carregar=async()=>{
+    let j;try{j=await (await fetch(CONFIG.urlPlanilha+"?acao=lista&"+q+"&t="+Date.now())).json()}
+    catch(x){app.innerHTML='<h1>'+esc(e.nome)+'</h1><p class="warn">Não foi possível carregar. Verifique a internet.</p><button class="btn" id="rec">Tentar de novo</button>';$("#rec").onclick=()=>organizador(id,senha);return false}
+    if(!j.ok){pedeSenha(j.erro||"Senha incorreta.");return false}
+    itens=j.itens||[];return true;
+  };
+  if(!(await carregar()))return;
+  app.innerHTML=`<a class="back" href="#">‹ Eventos</a><h1>${esc(e.nome)}</h1><p class="lead">Área do organizador. Marque o pagamento de cada inscrito.</p>
+  <div class="count" id="ores" style="grid-template-columns:repeat(4,1fr)"></div>
+  <div class="box"><div class="row"><div><label for="obusca">Buscar (nome, CPF, número)</label><input type="text" id="obusca"></div>
+  <div><label for="ofil">Mostrar</label><select id="ofil"><option value="todos">Todos</option><option value="pend">Pendentes</option><option value="pago">Pagos</option></select></div></div>
+  <p style="margin:12px 0 0"><button class="btn sm" id="oatu" type="button">Atualizar</button> <button class="btn sm alt" id="ocsv" type="button">Baixar CSV</button></p>
+  <p class="warn" id="omsg" role="status"></p><div class="wrap" id="olista"></div></div>`;
+  const dig=v=>String(v||"").replace(/\D/g,"");
+  const lista=()=>{
+    const pg=itens.filter(i=>i.pago),tot=pg.reduce((a,i)=>a+(Number(i.valor)||0),0);
+    $("#ores").innerHTML=[[itens.length,"inscritos"],[pg.length,"pagos"],[itens.length-pg.length,"pendentes"],[brl(tot),"recebido"]].map(([n,l])=>`<div><b style="font-size:${String(n).length>6?18:30}px">${n}</b><small>${l}</small></div>`).join("");
+    const b=busca.toLowerCase(),bd=dig(busca);
+    const v=itens.filter(i=>(filtro==="todos"||(filtro==="pago")===!!i.pago)&&(!b||String(i.nome).toLowerCase().includes(b)||String(i.numero).toLowerCase().includes(b)||(bd&&dig(i.cpf).includes(bd))));
+    $("#olista").innerHTML=v.length?`<table><thead><tr><th>Nº</th><th>Nome</th><th>CPF</th><th>Celular</th><th>Categoria</th><th>Camisa</th><th>Pacote</th><th>Valor</th><th>Pagamento</th></tr></thead><tbody>${v.map(i=>{const c=dig(i.cel);return `<tr><td>${esc(i.numero)}</td><td>${esc(i.nome)}<br><small>${esc(i.email)}</small></td><td>${esc(i.cpf)}</td><td>${c?`<a href="https://wa.me/${c.startsWith("55")?c:"55"+c}" target="_blank" rel="noopener">${esc(i.cel)}</a>`:""}</td><td>${esc(i.categoria)}</td><td>${esc(i.camisa)}</td><td>${esc(i.pacote)}</td><td>${brl(Number(i.valor)||0)}</td><td><span class="st ${i.pago?"ok":"p"}">${i.pago?"Pago":"Pendente"}</span><br><button class="btn sm ${i.pago?"alt":""}" data-n="${esc(i.numero)}" type="button" style="margin-top:6px">${i.pago?"Desmarcar":"Marcar pago"}</button></td></tr>`}).join("")}</tbody></table>`:"<p class=\"warn\">Nenhuma inscrição encontrada.</p>";
+    $("#olista").querySelectorAll("button[data-n]").forEach(bt=>bt.onclick=async()=>{
+      const it=itens.find(x=>x.numero===bt.dataset.n),novo=!it.pago;bt.disabled=true;$("#omsg").textContent="Salvando...";
+      try{const j=await (await fetch(CONFIG.urlPlanilha,{method:"POST",body:JSON.stringify({acao:"pago",id,evento:e.nome,senha,numero:it.numero,pago:novo})})).json();
+        if(!j.ok){$("#omsg").textContent=j.erro||"Não foi possível salvar.";bt.disabled=false;return}
+        it.pago=novo;$("#omsg").textContent="Salvo: "+it.nome+" — "+(novo?"pago":"pendente")+".";lista();
+      }catch(x){$("#omsg").textContent="Erro de conexão. Tente de novo.";bt.disabled=false}
+    });
+  };
+  $("#obusca").oninput=ev=>{busca=ev.target.value.trim();lista()};
+  $("#ofil").onchange=ev=>{filtro=ev.target.value;lista()};
+  $("#oatu").onclick=async()=>{$("#omsg").textContent="Atualizando...";if(await carregar()){$("#omsg").textContent="Atualizado.";lista()}};
+  $("#ocsv").onclick=()=>{
+    const cab=["Número","Inscrição em","Nome","Responsável","E-mail","CPF","Celular","Gênero","Categoria","Camisa","Pacote","Valor","Pago"];
+    const c=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+    const rows=itens.map(i=>[i.numero,i.em,i.nome,i.responsavel,i.email,i.cpf,i.cel,i.genero,i.categoria,i.camisa,i.pacote,i.valor,i.pago?"Sim":"Não"].map(c).join(";"));
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+[cab.map(c).join(";")].concat(rows).join("\r\n")],{type:"text/csv;charset=utf-8"}));
+    a.download=id+"-inscritos.csv";a.click();URL.revokeObjectURL(a.href);
+  };
+  lista();
+}
+
 function route(){clearInterval(window._t);const h=location.hash.slice(1);
-  if(h.startsWith("evento/"))evento(h.slice(7));else if(h==="comprovante")comprovante();else home();}
+  if(h.startsWith("organizador/")){const [,oid,...rs]=h.split("/");organizador(oid,decodeURIComponent(rs.join("/")))}else if(h.startsWith("evento/"))evento(h.slice(7));else if(h==="comprovante")comprovante();else home();}
 addEventListener("hashchange",route);route();
 </script>
 </body>
