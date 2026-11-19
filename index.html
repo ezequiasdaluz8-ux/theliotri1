@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Corridas 2027 | Assessoria Thelio Tri</title>
+<title>Corridas | Assessoria Thelio Tri</title>
 <style>
 :root{--bg:#0d0d0d;--card:#1a1a17;--ink:#f3f0e6;--muted:#a79f8b;--line:#3d3718;--accent:#f5b800;--accent-ink:#111}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
@@ -73,6 +73,10 @@ const CONFIG = {
 };
 /* flyer: coloque a imagem na mesma pasta do index.html e informe só o nome do arquivo. Sem imagem, aparece um bloco colorido. */
 const EVENTOS = [
+  {id:"corrida-do-bem-2026", nome:"Corrida do Bem: Alimentando Esperança", data:"2026-12-20", hora:"06:00", concentracao:"05:30", local:"Praça Matriz", org:"Assessoria Thelio Tri e diRoma Magazine", abre:"2026-11-19T00:00:00-03:00", fecha:"2026-12-15T23:59:00-03:00", flyer:"flyer-corrida-do-bem.jpg", ratio:"4/5", cor:"#5a0f10",
+   sobre:"Corrida solidária de 3 km. A inscrição custa R$ 60,00 mais 2 kg de alimentos não perecíveis. O kit inclui camisa, medalha, carbo gel e número do peito.",
+   categorias:["3 km Masculino","3 km Feminino"],
+   pacotes:[{n:"Kit completo",p:60,d:"Camisa, medalha, carbo gel e número do peito (+ 2 kg de alimentos não perecíveis)"}]},
   {id:"niver-rafa", nome:"Niver do Rafa", data:"2027-01-24", local:"Guarumã", cor:"#2a2410"},
   {id:"niver-thelio-tri", nome:"Niver Thelio Tri", data:"2027-04-18", hora:"06:00", concentracao:"05:30", local:"Praça Matriz, Acará", org:"Assessoria Thelio Tri", abre:"2026-12-01T08:00:00-03:00", fecha:"2027-04-16T23:59:00-03:00", flyer:"flyer-niver-thelio-tri.jpg", cor:"#2a2410",
    premiacao:"5 primeiros da classificação geral e Top 10 da categoria feminina, com dinheiro e brindes.",
@@ -93,11 +97,11 @@ const sh=d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",mo
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 $("#brand").textContent=CONFIG.nome;
 
-function flyer(e){const bg=e.flyer?`background-image:url('${e.flyer}')`:`background:${e.cor}`;
+function flyer(e){const bg=(e.flyer?`background-image:url('${e.flyer}')`:`background:${e.cor}`)+(e.ratio?`;aspect-ratio:${e.ratio}`:"");
   return `<div class="flyer" style="${bg}">${e.flyer?"":`<span class="d">${sh(e.data)}</span><span class="n">${esc(e.nome)}</span>`}</div>`}
 
 function home(){
-  app.innerHTML=`<h1>Corridas de 2027</h1><p class="lead">Escolha a prova, veja os detalhes e faça sua inscrição em poucos minutos.</p>
+  app.innerHTML=`<h1>Próximas corridas</h1><p class="lead">Escolha a prova, veja os detalhes e faça sua inscrição em poucos minutos.</p>
   <div class="grid">${EVENTOS.map(e=>`<a class="ev" href="#evento/${e.id}"><div class="cd" data-id="${e.id}">${cd(e)}</div>${flyer(e)}<div class="meta"><strong>${esc(e.nome)}</strong>${dt(e.data)}<br>${esc(e.local)}${e.pacotes?"":"<br><small>Detalhes em breve</small>"}</div></a>`).join("")}</div>`;
   clearInterval(window._t);
   window._t=setInterval(()=>document.querySelectorAll(".cd[data-id]").forEach(el=>{const e=EVENTOS.find(x=>x.id===el.dataset.id);if(e)el.innerHTML=cd(e)}),1000);
@@ -112,7 +116,7 @@ function evento(id){
   app.innerHTML=`<a class="back" href="#">‹ Todos os eventos</a>
   <div class="two"><div>${flyer(e)}</div><div>
     <h1>${esc(e.nome)}</h1>
-    <dl><dt>Data</dt><dd>${dt(e.data)}</dd><dt>Concentração</dt><dd>${e.concentracao}</dd><dt>Largada</dt><dd>${e.hora}</dd><dt>Local</dt><dd>${esc(e.local)}</dd><dt>Organização</dt><dd>${esc(e.org)}</dd><dt>Premiação</dt><dd>${esc(e.premiacao)}</dd></dl>
+    <dl><dt>Data</dt><dd>${dt(e.data)}</dd>${e.concentracao?`<dt>Concentração</dt><dd>${esc(e.concentracao)}</dd>`:""}${e.hora?`<dt>Largada</dt><dd>${esc(e.hora)}</dd>`:""}<dt>Local</dt><dd>${esc(e.local)}</dd>${e.org?`<dt>Organização</dt><dd>${esc(e.org)}</dd>`:""}${e.premiacao?`<dt>Premiação</dt><dd>${esc(e.premiacao)}</dd>`:""}</dl>
     <p>${esc(e.sobre)}</p></div></div>
   ${e.premios?premios(e.premios):""}
   <form class="box" id="f" novalidate><h2>Inscrição</h2>
