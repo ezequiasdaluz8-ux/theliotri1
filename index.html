@@ -78,7 +78,7 @@ const CONFIG = {
   pixBanco: "Bradesco",
   pixNome: "Thelio Trindade de Moraes",
   urlPlanilha: "https://script.google.com/macros/s/AKfycbwyPo-9DBvjOwuKvWz6WjuslQ8rMQKHQ1SN4LTS5L287PsNzyMs2lekyGBL0Cky2zaY0Q/exec",  // URL do app da Web do Google Apps Script (termina em /exec)
-  modoTeste: true                     // true = libera o formulário mesmo fora do prazo (use só para testar; volte para false ao publicar)
+  modoTeste: false                    // false = formulário só aparece dentro do prazo de inscrição (versão final). true = libera tudo, só para testar
 };
 /* Opcional em cada evento: pixChave, pixBanco, pixNome e whatsapp. Se faltar, usa os dados do CONFIG acima. */
 /* flyer: coloque a imagem na mesma pasta do index.html e informe só o nome do arquivo. Sem imagem, aparece um bloco colorido. */
@@ -166,7 +166,7 @@ function evento(id){
   const upd=()=>{const i=+document.querySelector("input[name=pk]:checked").value;$("#tot").textContent=brl(e.pacotes[i].p);if(e.kids)$("#campw").style.display=e.pacotes[i].pai?"":"none"};
   app.querySelectorAll("input[name=pk]").forEach(r=>r.onchange=upd);upd();
   $("#f").onsubmit=async ev=>{ev.preventDefault();
-    if(e.abre&&!CONFIG.modoTeste){const n=new Date();if(n<new Date(e.abre)||n>=new Date(e.fecha)){$("#err").textContent="As inscrições não estão abertas no momento.";return}}
+    if(!CONFIG.modoTeste){const n=new Date();if(!e.abre||!e.fecha||n<new Date(e.abre)||n>=new Date(e.fecha)){$("#err").textContent="As inscrições não estão abertas no momento.";return}}
     const v=id=>$("#"+id).value.trim(), cpf=v("cpf").replace(/\D/g,""), cel=v("cel").replace(/\D/g,"");
     if(!v("nome")||!v("sob")||(e.kids&&!v("resp"))||!/.+@.+\..+/.test(v("email"))||cpf.length!==11||cel.length<10){$("#err").textContent="Preencha todos os campos. CPF com 11 dígitos e celular com DDD.";return}
     if(!/^https:\/\/script\.google\.com\//.test(CONFIG.urlPlanilha)){$("#err").textContent="Inscrições ainda não configuradas. Avise o organizador.";return}
@@ -197,7 +197,7 @@ function cd(e){
 }
 function janela(e){
   clearInterval(window._t);
-  if(!e.abre||!e.fecha)return;
+  if(!e.abre||!e.fecha){if(!CONFIG.modoTeste){const f0=$("#f"),b0=document.createElement("div");b0.className="box";b0.innerHTML="<h2>Inscrições em breve</h2><p>As datas de abertura das inscrições serão divulgadas em breve.</p>";f0.before(b0);f0.remove()}return}
   const ab=new Date(e.abre),fe=new Date(e.fecha),f=$("#f"),box=document.createElement("div");
   box.className="box";f.before(box);
   const fmt=d=>d.toLocaleString("pt-BR",{dateStyle:"long",timeStyle:"short"});
